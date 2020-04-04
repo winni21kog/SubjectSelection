@@ -1,0 +1,187 @@
+﻿@using Newtonsoft.Json
+@model SubjectSelection.ViewModel.StudentViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>學生資訊</title>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/Site.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">學生選課</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+                @Html.ActionLink("學生資料", "Index", "Students", new { area = "" }, new { @class = "nav-item nav-link" })
+                @Html.ActionLink("課程資料", "Index", "Students", new { area = "" }, new { @class = "nav-item nav-link" })
+                @Html.ActionLink("學生選課", "Index", "Students", new { area = "" }, new { @class = "nav-item nav-link" })
+            </div>
+        </div>
+    </nav>
+    <div id="app" class="container body-content mt-3">
+        <div class="row">
+            <div class="col-10">
+                <div class="row">
+                    <div class="input-group mb-3 col-6">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">學號</span>
+                        </div>
+                        <input type="text" class="form-control" v-model="student.StudentId">
+
+                    </div>
+                    <div class="input-group mb-3 col-6">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">生日</span>
+                        </div>
+                        <input type="date" class="form-control" v-model="student.BirthdayStr">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-group mb-3 col-6">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">姓名</span>
+                        </div>
+                        <input type="text" class="form-control" v-model="student.Name">
+                    </div>
+                    <div class="input-group mb-3 col-6">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Email</span>
+                        </div>
+                        <input type="text" class="form-control" v-model="student.Email">
+                    </div>
+                </div>
+                
+            </div>
+            <div class="col-2">
+                <button v-if="add" type="button" class="btn btn-primary" v-on:click="Add()">新增</button>
+                <button v-else type="button" class="btn btn-success">儲存</button>
+                <button type="button" class="btn btn-warning" v-on:click="Clear()">清空</button>
+            </div>
+        </div>
+        <div>
+            <table id="dataTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+
+                        <td>學號</td>
+                        <td>姓名</td>
+                        <td>生日</td>
+                        <td>Email</td>
+                        <td></td>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year</p>
+        </footer>
+    </div>
+
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    @*<script src="~/Scripts/popper.js"></script>*@
+    <script src="~/Scripts/bootstrap.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/vue.js"></script>
+
+    <script type="text/javascript">
+        // 用C#定義物件
+        var model = @Html.Raw(JsonConvert.SerializeObject(Model));
+        // 定義Vue
+        var vm = new Vue({
+            el: "#app",
+            data: {
+                student: model,
+                add:true,
+            },
+            methods: {
+                Add: function () {
+
+                    $.post("@Url.Action("Create", "Students")", { student: vm.student }).done(function (json) {
+                        if (json.Status) {
+                            alert('新增成功!');
+                            Clear();
+                            $('#dataTable').DataTable().ajax.reload();
+                        }
+                    })
+                },
+                Clear: function () {
+                    vm.Id = "";
+                    vm.student.StudentId = "";
+                    vm.student.Name = "";
+                    vm.student.BirthdayStr = "";
+                    vm.student.Email = "";
+                    vm.add = true;
+                },
+                
+            }
+        });
+
+        $(function () {
+            GetStudents();
+        });
+
+        function GetStudents() {
+            let table = $('#dataTable').DataTable({
+                // 關閉filter功能
+                searching: false,
+                ajax: {
+                    "type": "GET",
+                    "url": "@Url.Action("GetStudentList", "Students")",
+                    "dataSrc": function (json) {
+                        return json.Data;
+                    }
+                },
+                columns: [
+                    { "data": "StudentId" },
+                    { "data": "Name" },
+                    { "data": "BirthdayStr" },
+                    { "data": "Email" },
+                    {
+                        data: "Id",
+                        orderable: false, // 禁用排序
+                        render: function (data, type, row, meta) {
+                            // data==row.Id
+                            return "<input type='button' onclick='Updata(" + data + ")' value='編輯' class='btn btn-primary'/>"
+                                + "<input type='button' onclick='Delete(" + data + ")' value='刪除' class='btn btn-danger'/>";
+                        }
+                    }
+                ],
+                deferRender: true
+            });
+        }
+
+        function Updata(id) {
+            $.get("@Url.Action("GetStudent", "Students")", { id: id }).done(function (json) {
+                if (json.Status) {
+                    let s = json.Data;
+                    vm.student.Id = s.Id;
+                    vm.student.StudentId = s.StudentId;
+                    vm.student.Name = s.Name;
+                    vm.student.BirthdayStr = s.BirthdayStr;
+                    vm.student.Email = s.Email;
+                    vm.add = false;
+                }
+            })
+        };
+
+        function Delete(id) {
+            alert(id)
+        };
+
+
+    </script>
+
+</body>
+</html>
+
+
+
