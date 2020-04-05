@@ -16,6 +16,10 @@ namespace SubjectSelection
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            // 加入Log4net設定
+            string log4netPath = Server.MapPath("~/log4net.config");
+            log4net.Config.XmlConfigurator.ConfigureAndWatch(new System.IO.FileInfo(log4netPath));
         }
     }
 }

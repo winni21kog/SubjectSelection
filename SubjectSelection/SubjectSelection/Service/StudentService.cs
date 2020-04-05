@@ -1,4 +1,5 @@
-﻿using SubjectSelection.Models;
+﻿using log4net;
+using SubjectSelection.Models;
 using SubjectSelection.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,10 @@ namespace SubjectSelection.Service
     public class StudentService
     {
         private SubjectSelectionEntities db = new SubjectSelectionEntities();
+        static ILog logger = LogManager.GetLogger("Web");
 
         /// <summary>
-        /// 取得所有學生資料
+        /// 取得所有學生
         /// </summary>
         /// <returns></returns>
         public IEnumerable<StudentViewModel> GetStudents()
@@ -32,13 +34,12 @@ namespace SubjectSelection.Service
         }
 
         /// <summary>
-        /// 取得特定學生資料
+        /// 取得特定學生
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">學生id</param>
         /// <returns></returns>
         public StudentViewModel GetStudents(int id)
         {
-            //var result = db.Student.Where(x => x.Id == id).FirstOrDefault();
             var result = db.Student.AsEnumerable().Where(x => x.Id == id).Select(s => new StudentViewModel
             {
                 Id = s.Id,
@@ -52,11 +53,15 @@ namespace SubjectSelection.Service
             return result;
         }
 
+        /// <summary>
+        /// 新增學生
+        /// </summary>
+        /// <param name="student">學生資料</param>
         public void AddStudent(StudentViewModel student)
         {
             var result = new Student
             {
-                StudentId = student.StudentId,
+                StudentId = GetStudentId(),
                 Name = student.Name,
                 Birthday = Convert.ToDateTime(student.BirthdayStr),
                 Email = student.Email
@@ -64,19 +69,72 @@ namespace SubjectSelection.Service
 
             db.Student.Add(result);
             db.SaveChanges();
+            logger.Info($"新增學生 StudentId:{result.StudentId},Name:{result.Name},Birthday:{result.Birthday},Email:{result.Email}");
         }
 
-        public void UpdataStudent(Student student)
+        /// <summary>
+        /// 取得學號流水號
+        /// </summary>
+        /// <returns></returns>
+        private string GetStudentId()
         {
-            db.Entry(student).State = EntityState.Modified;
-            db.SaveChanges();
+            var studentId = string.Empty;
+
+            if (db.Student.Select(s => s.StudentId).Count() != 0)
+            {
+                var oId = db.Student.OrderByDescending(s => s.StudentId).Select(s => s.StudentId).FirstOrDefault();
+                var nId = Convert.ToInt32(oId.Substring(1)) + 1;
+                studentId = "S" + nId.ToString().PadLeft(4, '0');
+            }
+            else
+            {
+                studentId = "S0001";
+            }
+
+            return studentId;
         }
 
+        /// <summary>
+        /// 更新學生
+        /// </summary>
+        /// <param name="student">學生資料</param>
+        public void UpdataStudent(StudentViewModel student)
+        {
+            // 取得原始資料
+            var originSId = db.Student.Where(s => s.Id == student.Id).Select(s=>s.StudentId).FirstOrDefault();
+            //更新Model
+            var result = new Student
+            {
+                Id = student.Id,
+                StudentId = originSId,
+                Name = student.Name,
+                Birthday = Convert.ToDateTime(student.BirthdayStr),
+                Email = student.Email
+            };
+
+            db.Entry(result).State = EntityState.Modified;
+            db.SaveChanges();
+            logger.Info($"修改學生資料 Id:{result.Id} StudentId:{result.StudentId},Name:{result.Name},Birthday:{result.Birthday},Email:{result.Email}");
+        }
+
+        /// <summary>
+        /// 刪除學生
+        /// </summary>
+        /// <param name="id">學生id</param>
         public void DeleteStudent(int id)
         {
             Student student = db.Student.Find(id);
-            db.Student.Remove(student);
-            db.SaveChanges();
+            if (student != null)
+            {
+                db.Student.Remove(student);
+                db.SaveChanges();
+                logger.Info($"刪除學生 Id:{student.Id} StudentId:{student.StudentId},Name:{student.Name},Birthday:{student.Birthday},Email:{student.Email}");
+            }
+            else
+            {
+                logger.Error($"找不到學生 Id:{student.Id}");
+            }
+
         }
     }
 }

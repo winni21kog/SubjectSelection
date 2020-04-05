@@ -9,7 +9,7 @@
     <meta charset="utf-8">
     <title>學生資訊</title>
     <link href="~/Content/bootstrap.css" rel="stylesheet" />
-    <link href="~/Content/Site.css" rel="stylesheet" />
+    @*<link href="~/Content/Site.css" rel="stylesheet" />*@
     <link href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
 </head>
 <body>
@@ -34,8 +34,8 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text">學號</span>
                         </div>
-                        <input type="text" class="form-control" v-model="student.StudentId">
-
+                        @* 學號為流水號，不應該給使用者填寫，應由系統產生 *@
+                        <span class="form-control">{{student.StudentId}}</span>
                     </div>
                     <div class="input-group mb-3 col-6">
                         <div class="input-group-prepend">
@@ -58,11 +58,11 @@
                         <input type="text" class="form-control" v-model="student.Email">
                     </div>
                 </div>
-                
+
             </div>
             <div class="col-2">
                 <button v-if="add" type="button" class="btn btn-primary" v-on:click="Add()">新增</button>
-                <button v-else type="button" class="btn btn-success">儲存</button>
+                <button v-else type="button" class="btn btn-success" v-on:click="Save()">儲存</button>
                 <button type="button" class="btn btn-warning" v-on:click="Clear()">清空</button>
             </div>
         </div>
@@ -82,7 +82,7 @@
         </div>
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year</p>
+            <p>&copy; Alan @DateTime.Now.Year</p>
         </footer>
     </div>
 
@@ -93,26 +93,57 @@
     <script src="~/Scripts/vue.js"></script>
 
     <script type="text/javascript">
-        // 用C#定義物件
+        // 用C# ViewModel 定義 Vue data
         var model = @Html.Raw(JsonConvert.SerializeObject(Model));
         // 定義Vue
         var vm = new Vue({
             el: "#app",
             data: {
                 student: model,
-                add:true,
+                add: true,
+                
             },
             methods: {
+                // 新增
                 Add: function () {
+                    if (vm.student.Name == null || vm.student.Name == '' ||
+                        vm.student.BirthdayStr == null || vm.student.BirthdayStr == '') {
+                        alert('姓名或生日未填寫！');
+                    } else {
+                        // 新增資料並刷新DataTable
+                        $.post("@Url.Action("Create", "Students")", { student: vm.student }).done(function (json) {
+                            if (json.Status) {
+                                //刷新DataTable
+                                $('#dataTable').DataTable().ajax.reload();
+                                //Vue function 清空輸入框
+                                vm.Clear();
+                                alert('新增成功!');
+                            } else {
+                                alert(`新增失敗! ${json.Message}`);
+                            }
+                        });
+                    }
 
-                    $.post("@Url.Action("Create", "Students")", { student: vm.student }).done(function (json) {
-                        if (json.Status) {
-                            alert('新增成功!');
-                            Clear();
-                            $('#dataTable').DataTable().ajax.reload();
-                        }
-                    })
                 },
+                // 儲存
+                Save: function () {
+                    if (vm.student.Name == null || vm.student.Name == '' ||
+                        vm.student.BirthdayStr == null || vm.student.BirthdayStr == '') {
+                        alert('姓名或生日未填寫！');
+                    } else {
+                        // 儲存資料並刷新DataTable
+                        $.post("@Url.Action("Edit", "Students")", { student: vm.student }).done(function (json) {
+                            if (json.Status) {
+                                $('#dataTable').DataTable().ajax.reload();
+                                vm.Clear();
+                                alert('儲存成功!');
+                            } else {
+                                alert(`儲存失敗! ${json.Message}`);
+                            }
+                        });
+                    }
+                },
+                // 清除輸入框
                 Clear: function () {
                     vm.Id = "";
                     vm.student.StudentId = "";
@@ -125,14 +156,14 @@
             }
         });
 
+        // 畫面載入執行function
         $(function () {
             GetStudents();
         });
 
+        // 取得學生資料
         function GetStudents() {
             let table = $('#dataTable').DataTable({
-                // 關閉filter功能
-                searching: false,
                 ajax: {
                     "type": "GET",
                     "url": "@Url.Action("GetStudentList", "Students")",
@@ -159,6 +190,7 @@
             });
         }
 
+        // 編輯:id取得學生資料顯示到輸入框上
         function Updata(id) {
             $.get("@Url.Action("GetStudent", "Students")", { id: id }).done(function (json) {
                 if (json.Status) {
@@ -169,12 +201,25 @@
                     vm.student.BirthdayStr = s.BirthdayStr;
                     vm.student.Email = s.Email;
                     vm.add = false;
+                } else {
+                    alert(`查詢失敗! ${json.Message}`);
                 }
             })
         };
 
+        // 刪除學生:
         function Delete(id) {
-            alert(id)
+            if (confirm('是否刪除該學生?') && id !=null && id !='') {
+                $.post('@Url.Action("Delete","Students")', { id: id }).done(function (json) {
+                    if (json.Status) {
+                        // 刷新DataTable
+                        $('#dataTable').DataTable().ajax.reload();
+                        vm.Clear();
+                    } else {
+                        alert(`刪除失敗! ${json.Message}`);
+                    }
+                });
+            }
         };
 
 
