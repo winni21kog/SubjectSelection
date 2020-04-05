@@ -6,7 +6,7 @@ GO
 
 CREATE TABLE [dbo].[Subject](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[SudjectId] [nvarchar](4) NOT NULL,
+	[SubjectId] [nvarchar](4) NOT NULL,
 	[Name] [nvarchar](20) NOT NULL,
 	[Credit] [int] NOT NULL,
 	[Location] [nvarchar](20) NULL,

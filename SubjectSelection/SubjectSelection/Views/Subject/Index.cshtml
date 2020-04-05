@@ -1,5 +1,5 @@
 ﻿@using Newtonsoft.Json
-@model SubjectSelection.ViewModel.StudentViewModel
+@model SubjectSelection.ViewModel.SubjectViewModel
 @{
     Layout = null;
 }
@@ -7,7 +7,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>學生資訊</title>
+    <title>課程資訊</title>
     <link href="~/Content/bootstrap.css" rel="stylesheet" />
     @*<link href="~/Content/Site.css" rel="stylesheet" />*@
     <link href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
@@ -32,33 +32,40 @@
                 <div class="row">
                     <div class="input-group mb-3 col-6">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">學號</span>
+                            <span class="input-group-text">課號</span>
                         </div>
-                        @* 學號為流水號，不應該給使用者填寫，應由系統產生 *@
-                        <span class="form-control">{{student.StudentId}}</span>
+                        @* 課號為流水號，不應該給使用者填寫，應由系統產生 *@
+                    <span class="form-control">{{subject.SubjectId}}</span>
                     </div>
                     <div class="input-group mb-3 col-6">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">生日</span>
+                            <span class="input-group-text">課名</span>
                         </div>
-                        <input type="date" class="form-control" v-model="student.BirthdayStr">
+                        <input type="text" class="form-control" v-model="subject.Name">
                     </div>
                 </div>
                 <div class="row">
                     <div class="input-group mb-3 col-6">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">姓名</span>
+                            <span class="input-group-text">學分數</span>
                         </div>
-                        <input type="text" class="form-control" v-model="student.Name">
+                        <input type="number" class="form-control" v-model="subject.Credit">
                     </div>
                     <div class="input-group mb-3 col-6">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">Email</span>
+                            <span class="input-group-text">上課地點</span>
                         </div>
-                        <input type="text" class="form-control" v-model="student.Email">
+                        <input type="text" class="form-control" v-model="subject.Location">
                     </div>
                 </div>
-
+                <div class="row">
+                    <div class="input-group mb-3 col-6">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">講師姓名</span>
+                        </div>
+                        <input type="text" class="form-control" v-model="subject.teacherName">
+                    </div>
+                </div>
             </div>
             <div class="col-2">
                 <button v-if="add" type="button" class="btn btn-primary" v-on:click="Add()">新增</button>
@@ -71,10 +78,11 @@
                 <thead>
                     <tr>
 
-                        <td>學號</td>
-                        <td>姓名</td>
-                        <td>生日</td>
-                        <td>Email</td>
+                        <td>課號</td>
+                        <td>課名</td>
+                        <td>學分數</td>
+                        <td>上課地點</td>
+                        <td>講師姓名</td>
                         <td></td>
                     </tr>
                 </thead>
@@ -99,19 +107,20 @@
         var vm = new Vue({
             el: "#app",
             data: {
-                student: model,
+                subject: model,
                 add: true,
-                
             },
             methods: {
                 // 新增
                 Add: function () {
-                    if (vm.student.Name == null || vm.student.Name == '' ||
-                        vm.student.BirthdayStr == null || vm.student.BirthdayStr == '') {
-                        alert('姓名或生日未填寫！');
+                    if (vm.subject.Name == null || vm.subject.Name == '' ||
+                        vm.subject.Credit == null || vm.subject.Credit == '' ||
+                        vm.subject.Location == null || vm.subject.Location == '' ||
+                        vm.subject.teacherName == null || vm.subject.teacherName == '') {
+                        alert('課名或學分或上課地點或講師名字未填寫！');
                     } else {
                         // 新增資料並刷新DataTable
-                        $.post("@Url.Action("Create", "Students")", { student: vm.student }).done(function (json) {
+                        $.post("@Url.Action("Create", "Subject")", { subject: vm.subject }).done(function (json) {
                             if (json.Status) {
                                 //刷新DataTable
                                 $('#dataTable').DataTable().ajax.reload();
@@ -127,12 +136,14 @@
                 },
                 // 儲存
                 Save: function () {
-                    if (vm.student.Name == null || vm.student.Name == '' ||
-                        vm.student.BirthdayStr == null || vm.student.BirthdayStr == '') {
-                        alert('姓名或生日未填寫！');
+                    if (vm.subject.Name == null || vm.subject.Name == '' ||
+                        vm.subject.Credit == null || vm.subject.Credit == '' ||
+                        vm.subject.Location == null || vm.subject.Location == '' ||
+                        vm.subject.teacherName == null || vm.subject.teacherName == '') {
+                        alert('課名或學分或上課地點或講師名字未填寫！');
                     } else {
                         // 儲存資料並刷新DataTable
-                        $.post("@Url.Action("Edit", "Students")", { student: vm.student }).done(function (json) {
+                        $.post("@Url.Action("Edit", "Subject")", { subject: vm.subject }).done(function (json) {
                             if (json.Status) {
                                 $('#dataTable').DataTable().ajax.reload();
                                 vm.Clear();
@@ -146,36 +157,38 @@
                 // 清除輸入框
                 Clear: function () {
                     vm.Id = "";
-                    vm.student.StudentId = "";
-                    vm.student.Name = "";
-                    vm.student.BirthdayStr = "";
-                    vm.student.Email = "";
+                    vm.subject.SubjectId = "";
+                    vm.subject.Name = "";
+                    vm.subject.Credit = "";
+                    vm.subject.Location = "";
+                    vm.subject.teacherName = "";
                     vm.add = true;
                 },
-                
+
             }
         });
 
         // 畫面載入執行function
         $(function () {
-            GetStudents();
+            GetSubjects();
         });
 
-        // 取得學生資料
-        function GetStudents() {
+        // 取得課程資料
+        function GetSubjects() {
             let table = $('#dataTable').DataTable({
                 ajax: {
                     "type": "GET",
-                    "url": "@Url.Action("GetStudentList", "Students")",
+                    "url": "@Url.Action("GetSubjectList", "Subject")",
                     "dataSrc": function (json) {
                         return json.Data;
                     }
                 },
                 columns: [
-                    { "data": "StudentId" },
+                    { "data": "SubjectId" },
                     { "data": "Name" },
-                    { "data": "BirthdayStr" },
-                    { "data": "Email" },
+                    { "data": "Credit" },
+                    { "data": "Location" },
+                    { "data": "teacherName" },
                     {
                         data: "Id",
                         orderable: false, // 禁用排序
@@ -190,16 +203,17 @@
             });
         }
 
-        // 編輯:id取得學生資料顯示到輸入框上
+        // 編輯:id取得課程資料顯示到輸入框上
         function Updata(id) {
-            $.get("@Url.Action("GetStudent", "Students")", { id: id }).done(function (json) {
+            $.get("@Url.Action("GetSubject", "Subject")", { id: id }).done(function (json) {
                 if (json.Status) {
                     let s = json.Data;
-                    vm.student.Id = s.Id;
-                    vm.student.StudentId = s.StudentId;
-                    vm.student.Name = s.Name;
-                    vm.student.BirthdayStr = s.BirthdayStr;
-                    vm.student.Email = s.Email;
+                    vm.subject.Id = s.Id;
+                    vm.subject.SubjectId = s.SubjectId;
+                    vm.subject.Name = s.Name;
+                    vm.subject.Credit = s.Credit;
+                    vm.subject.Location = s.Location;
+                    vm.subject.teacherName = s.teacherName;
                     vm.add = false;
                 } else {
                     alert(`查詢失敗! ${json.Message}`);
@@ -207,10 +221,10 @@
             })
         };
 
-        // 刪除學生:
+        // 刪除課程
         function Delete(id) {
-            if (confirm('是否刪除該學生?') && id !=null && id !='') {
-                $.post('@Url.Action("Delete","Students")', { id: id }).done(function (json) {
+            if (confirm('是否刪除該課程?') && id !=null && id !='') {
+                $.post('@Url.Action("Delete","Subject")', { id: id }).done(function (json) {
                     if (json.Status) {
                         // 刷新DataTable
                         $('#dataTable').DataTable().ajax.reload();

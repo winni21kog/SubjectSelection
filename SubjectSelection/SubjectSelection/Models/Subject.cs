@@ -15,10 +15,10 @@ namespace SubjectSelection.Models
     public partial class Subject
     {
         public int Id { get; set; }
-        public string SudjectId { get; set; }
         public string Name { get; set; }
         public int Credit { get; set; }
         public string Location { get; set; }
         public string teacherName { get; set; }
+        public string SubjectId { get; set; }
     }
 }
