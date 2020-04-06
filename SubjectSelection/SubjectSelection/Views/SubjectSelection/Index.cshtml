@@ -49,10 +49,10 @@
             </div>
         </div>
         <div class="row">
-            <div class="input-group mb-3">
+            <div>
                 <template v-for="subject in Model.Subjects">
-                    <input type="checkbox" :id="subject.Name" :value="subject.Id" v-model="checkedSubjects">
-                    <label :for="subject.Name">{{subject.Name}}</label>
+                    <input type="checkbox" :id="subject.Name" :value="subject.Id" v-model="checkedSubjects" style="width:15px;height:15px">
+                    <label class="mr-3" :for="subject.Name">{{subject.Name}}</label>
                 </template>
                 @*<span>Checked names: {{ checkedSubjects }}</span>*@
             </div>
@@ -113,6 +113,8 @@
                 Add: function () {
                     if (vm.selected == '') {
                         alert('未選擇學生！');
+                    } else if (vm.checkedSubjects == null || vm.checkedSubjects.length == 0) {
+                        alert('未選擇課程！');
                     } else {
                         // 新增選課資料並刷新DataTable
                         $.post("@Url.Action("Create", "SubjectSelection")", { sId: vm.selected, subjects: vm.checkedSubjects }).done(function (json) {
@@ -123,7 +125,7 @@
                                 vm.Clear();
                                 alert('新增選課成功!');
                             } else {
-                                alert(`新增選課失敗! ${json.Message}`);
+                                alert(`${json.Message}`);
                             }
                         });
                     }

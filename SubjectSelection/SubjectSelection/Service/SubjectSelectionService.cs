@@ -80,15 +80,19 @@ namespace SubjectSelection.Service
                 {
                     try
                     {
-                        var query = @"INSERT INTO Selection (StudentId,SubjectId) VALUES (@sId, @subject)";
-                        for (int i = 0; i < subjects.Length; i++)
+                        if (subjects != null)
                         {
-                            connection.Execute(query, new { sId, subject = subjects[i] },transaction);
+                            var query = @"INSERT INTO Selection (StudentId,SubjectId) VALUES (@sId, @subject)";
+                            for (int i = 0; i < subjects.Length; i++)
+                            {
+                                connection.Execute(query, new { sId, subject = subjects[i] }, transaction);
+                            }
+                            transaction.Commit();
+                            logger.Info($"學生Id:${sId} 新增課程成功");
+                            return true;
                         }
-
-                        transaction.Commit();
-                        logger.Info($"學生Id:${sId} 新增課程成功");
-                        return true;
+                        
+                        return false;
                     }
                     catch(Exception ex)
                     {
