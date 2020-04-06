@@ -11,7 +11,7 @@ namespace SubjectSelection.Service
 {
     public class StudentService
     {
-        private SubjectSelectionEntities db = new SubjectSelectionEntities();
+        private SubjectSelectionEntities1 db = new SubjectSelectionEntities1();
         static ILog logger = LogManager.GetLogger("Web");
 
         /// <summary>
@@ -115,6 +115,16 @@ namespace SubjectSelection.Service
             db.Entry(result).State = EntityState.Modified;
             db.SaveChanges();
             logger.Info($"修改學生資料 Id:{result.Id} StudentId:{result.StudentId},Name:{result.Name},Birthday:{result.Birthday},Email:{result.Email}");
+        }
+
+        /// <summary>
+        /// 檢查學生有無選擇課程
+        /// </summary>
+        /// <param name="id">學生Id</param>
+        /// <returns></returns>
+        public bool CheckSelection(int id)
+        {
+            return db.Selection.Where(s => s.StudentId == id).Any();
         }
 
         /// <summary>

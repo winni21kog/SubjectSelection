@@ -11,7 +11,7 @@ namespace SubjectSelection.Service
 {
     public class SubjectService
     {
-        private SubjectSelectionEntities db = new SubjectSelectionEntities();
+        private SubjectSelectionEntities1 db = new SubjectSelectionEntities1();
         static ILog logger = LogManager.GetLogger("Web");
 
         /// <summary>
@@ -120,6 +120,16 @@ namespace SubjectSelection.Service
         }
 
         /// <summary>
+        /// 檢查課程有無學生選擇
+        /// </summary>
+        /// <param name="id">課程Id</param>
+        /// <returns></returns>
+        public bool CheckSelection(int id)
+        {
+            return db.Selection.Where(s => s.SubjectId == id).Any();
+        }
+
+        /// <summary>
         /// 刪除課程
         /// </summary>
         /// <param name="id">課程id</param>
@@ -136,7 +146,6 @@ namespace SubjectSelection.Service
             {
                 logger.Error($"找不到課程 Id:{subject.Id}");
             }
-
         }
     }
 

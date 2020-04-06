@@ -12,16 +12,8 @@ namespace SubjectSelection.Service
 {
     public class SubjectSelectionService
     {
+        private ConnectionService connectionService = new ConnectionService();
         static ILog logger = LogManager.GetLogger("Web");
-
-        /// <summary>
-        /// 建立Connection
-        /// </summary>
-        /// <returns></returns>
-        private SqlConnection CreateConnection()
-        {
-            return new SqlConnection(ConfigurationManager.ConnectionStrings["DapperConnection"].ConnectionString);
-        }
 
         /// <summary>
         /// 取得所有選課
@@ -29,7 +21,7 @@ namespace SubjectSelection.Service
         /// <returns></returns>
         public IEnumerable<SubjectSelectionViewModel> GetSelections()
         {
-            using (var connection = CreateConnection())
+            using (var connection = connectionService.CreateConnection())
             {
                 connection.Open();
                 var query = @";with SelectionCTE as (
@@ -62,7 +54,7 @@ namespace SubjectSelection.Service
         /// <returns></returns>
         public int[] GetSelectionFromStudent(int id)
         {
-            using (var connection = CreateConnection())
+            using (var connection = connectionService.CreateConnection())
             {
                 connection.Open();
                 var query = @"select SubjectId from Selection where StudentId=@id";
@@ -80,7 +72,7 @@ namespace SubjectSelection.Service
         /// <param name="subjects">選擇的課程Id</param>
         public bool AddSelection(int sId, int[] subjects)
         {
-            using (var connection = CreateConnection())
+            using (var connection = connectionService.CreateConnection())
             {
                 connection.Open();
 
@@ -115,7 +107,7 @@ namespace SubjectSelection.Service
         /// <param name="subjects">選擇的課程Id</param>
         public bool UpdataSelection(int sId, int[] subjects)
         {
-            using (var connection = CreateConnection())
+            using (var connection = connectionService.CreateConnection())
             {
                 connection.Open();
 
@@ -168,7 +160,7 @@ namespace SubjectSelection.Service
         /// <param name="sId">學生Id</param>
         public void DeleteSelection(int sId)
         {
-            using (var connection = CreateConnection())
+            using (var connection = connectionService.CreateConnection())
             {
                 connection.Open();
 

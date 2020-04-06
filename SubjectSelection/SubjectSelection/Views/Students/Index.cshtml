@@ -101,7 +101,7 @@
             data: {
                 student: model,
                 add: true,
-                
+
             },
             methods: {
                 // 新增
@@ -152,7 +152,7 @@
                     vm.student.Email = "";
                     vm.add = true;
                 },
-                
+
             }
         });
 
@@ -182,7 +182,7 @@
                         render: function (data, type, row, meta) {
                             // data==row.Id
                             return "<input type='button' onclick='Updata(" + data + ")' value='編輯' class='btn btn-primary'/>"
-                                + "<input type='button' onclick='Delete(" + data + ")' value='刪除' class='btn btn-danger'/>";
+                                + "<input type='button' onclick='Check(" + data + ")' value='刪除' class='btn btn-danger'/>";
                         }
                     }
                 ],
@@ -207,21 +207,38 @@
             })
         };
 
-        // 刪除學生:
-        function Delete(id) {
-            if (confirm('是否刪除該學生?') && id !=null && id !='') {
-                $.post('@Url.Action("Delete","Students")', { id: id }).done(function (json) {
+        // 檢查學生有無選擇課程
+        function Check(id) {
+            if (confirm('是否刪除該學生?') && id != null && id != '') {
+                $.get('@Url.Action("CheckSelection")', { id: id }).done(function (json) {
                     if (json.Status) {
-                        // 刷新DataTable
-                        $('#dataTable').DataTable().ajax.reload();
-                        vm.Clear();
+                        if (json.Data) {
+                            // 學生有選課
+                            alert('學生有選擇課程，無法刪除!!');
+                        } else {
+                            // 學生沒有選課 刪除
+                            Delete(id)
+                        }
                     } else {
-                        alert(`刪除失敗! ${json.Message}`);
+                        // 失敗
+                        alert(`檢查學生選課失敗! ${json.Message}`);
                     }
                 });
             }
-        };
+        }
 
+        // 刪除學生
+        function Delete(id) {
+            $.post('@Url.Action("Delete", "Students")', { id: id }).done(function (json) {
+                if (json.Status) {
+                    // 刷新DataTable
+                    $('#dataTable').DataTable().ajax.reload();
+                    vm.Clear();
+                } else {
+                    alert(`刪除失敗! ${json.Message}`);
+                }
+            });
+        }
 
     </script>
 

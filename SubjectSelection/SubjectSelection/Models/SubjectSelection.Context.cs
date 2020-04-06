@@ -13,10 +13,10 @@ namespace SubjectSelection.Models
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class SubjectSelectionEntities : DbContext
+    public partial class SubjectSelectionEntities1 : DbContext
     {
-        public SubjectSelectionEntities()
-            : base("name=SubjectSelectionEntities")
+        public SubjectSelectionEntities1()
+            : base("name=SubjectSelectionEntities1")
         {
         }
     

@@ -143,6 +143,34 @@ namespace SubjectSelection.Controllers
             }
 
         }
+        
+        /// <summary>
+        /// 檢查課程有無學生選擇
+        /// </summary>
+        /// <param name="id">課程Id</param>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult CheckSelection(int id)
+        {
+            try
+            {
+                return Json(new ResponseData()
+                {
+                    Status = true,
+                    Data = subjectService.CheckSelection(id)
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"檢查選課資料失敗 Exception: {ex.Message}");
+                return Json(new ResponseData()
+                {
+                    Status = false,
+                    Message = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+        }
 
         /// <summary>
         /// 刪除課程資料

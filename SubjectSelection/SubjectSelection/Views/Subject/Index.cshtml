@@ -195,7 +195,7 @@
                         render: function (data, type, row, meta) {
                             // data==row.Id
                             return "<input type='button' onclick='Updata(" + data + ")' value='編輯' class='btn btn-primary'/>"
-                                + "<input type='button' onclick='Delete(" + data + ")' value='刪除' class='btn btn-danger'/>";
+                                + "<input type='button' onclick='Check(" + data + ")' value='刪除' class='btn btn-danger'/>";
                         }
                     }
                 ],
@@ -221,20 +221,38 @@
             })
         };
 
-        // 刪除課程
-        function Delete(id) {
-            if (confirm('是否刪除該課程?') && id !=null && id !='') {
-                $.post('@Url.Action("Delete","Subject")', { id: id }).done(function (json) {
+        // 檢查課程有無學生選擇
+        function Check(id) {
+            if (confirm('是否刪除該課程?') && id != null && id != '') {
+                $.get('@Url.Action("CheckSelection")', { id: id }).done(function (json) {
                     if (json.Status) {
-                        // 刷新DataTable
-                        $('#dataTable').DataTable().ajax.reload();
-                        vm.Clear();
+                        if (json.Data) {
+                            // 有學生選課
+                            alert('該課程已有學生選擇，無法刪除!!');
+                        } else {
+                            // 沒有學生選課 刪除
+                            Delete(id)
+                        }
                     } else {
-                        alert(`刪除失敗! ${json.Message}`);
+                        // 失敗
+                        alert(`檢查課程失敗! ${json.Message}`);
                     }
                 });
             }
-        };
+        }
+
+        // 刪除課程
+        function Delete(id) {
+            $.post('@Url.Action("Delete","Subject")', { id: id }).done(function (json) {
+                if (json.Status) {
+                    // 刷新DataTable
+                    $('#dataTable').DataTable().ajax.reload();
+                    vm.Clear();
+                } else {
+                    alert(`刪除失敗! ${json.Message}`);
+                }
+            });
+        }
 
 
     </script>
