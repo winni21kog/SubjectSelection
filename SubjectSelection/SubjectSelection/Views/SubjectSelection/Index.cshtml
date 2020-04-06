@@ -1,0 +1,247 @@
+﻿@using Newtonsoft.Json
+@model SubjectSelection.ViewModel.SubjectSelectionViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>選課編輯</title>
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">學生選課</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+                @Html.ActionLink("學生資訊", "Index", "Students", new { area = "" }, new { @class = "nav-item nav-link" })
+                @Html.ActionLink("課程編輯", "Index", "Subject", new { area = "" }, new { @class = "nav-item nav-link" })
+                @Html.ActionLink("選課編輯", "Index", "SubjectSelection", new { area = "" }, new { @class = "nav-item nav-link" })
+            </div>
+        </div>
+    </nav>
+    <div id="app" class="container body-content mt-3">
+        <div class="row">
+            <div class="col-6">
+                <div class="row">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">學生</label>
+                        </div>
+                        <select class="custom-select" v-model="selected" v-on:change="GetStudentSubjects()">
+                            <option disabled value="">請選擇...</option>
+                            <option v-for="student in Model.Students" v-bind:value="student.Id">
+                                {{student.StudentId}}({{ student.Name }})
+                            </option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-2">
+                <button v-if="add" type="button" class="btn btn-primary" v-on:click="Add()">新增</button>
+                <button v-else type="button" class="btn btn-success" v-on:click="Save()">儲存</button>
+                <button type="button" class="btn btn-warning" v-on:click="Clear()">清空</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-group mb-3">
+                <template v-for="subject in Model.Subjects">
+                    <input type="checkbox" :id="subject.Name" :value="subject.Id" v-model="checkedSubjects">
+                    <label :for="subject.Name">{{subject.Name}}</label>
+                </template>
+                @*<span>Checked names: {{ checkedSubjects }}</span>*@
+            </div>
+        </div>
+        <div>
+            <table id="dataTable" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <td>學號</td>
+                        <td>課程</td>
+                        <td></td>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <hr />
+        <footer>
+            <p>&copy; Alan @DateTime.Now.Year</p>
+        </footer>
+    </div>
+
+    <script src="~/Scripts/jquery-3.4.1.js"></script>
+    <script src="~/Scripts/bootstrap.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/vue.js"></script>
+
+    <script type="text/javascript">
+        // 用C# ViewModel 定義 Vue data
+        var model = @Html.Raw(JsonConvert.SerializeObject(Model));
+        // 定義Vue
+        var vm = new Vue({
+            el: "#app",
+            data: {
+                Model: model,
+                add: true,
+                // 選擇的學生Id
+                selected: '',
+                // 選擇的課程Id
+                checkedSubjects:[],
+            },
+            methods: {
+                // 取得學生的選修課程
+                GetStudentSubjects() {
+                    if (this.selected != '') {
+                        $.get('@Url.Action("GetSelection", "SubjectSelection")', { id: this.selected }).done(function (json) {
+                            if (json.Status) {
+                                vm.checkedSubjects = json.Data;
+                                if (vm.checkedSubjects.length != 0) {
+                                    vm.add = false;
+                                } else {
+                                    vm.add = true;
+                                }
+                            }
+                        });
+                    }
+                },
+                // 新增選課
+                Add: function () {
+                    if (vm.selected == '') {
+                        alert('未選擇學生！');
+                    } else {
+                        // 新增選課資料並刷新DataTable
+                        $.post("@Url.Action("Create", "SubjectSelection")", { sId: vm.selected, subjects: vm.checkedSubjects }).done(function (json) {
+                            if (json.Status) {
+                                //刷新DataTable
+                                $('#dataTable').DataTable().ajax.reload();
+                                //Vue function 清空輸入框
+                                vm.Clear();
+                                alert('新增選課成功!');
+                            } else {
+                                alert(`新增選課失敗! ${json.Message}`);
+                            }
+                        });
+                    }
+
+                },
+                // 儲存
+                Save: function () {
+                    if (vm.selected == '') {
+                        alert('未選擇學生！');
+                    } else {
+                        var updata = true;
+                        if (vm.checkedSubjects == null || vm.checkedSubjects.length == 0) {
+                            if (!confirm('此學生無選擇任何課程，是否確認執行?')) {
+                                updata = false;
+                            }
+                        }
+                        if (updata) {
+                            // 儲存資料並刷新DataTable
+                            $.post("@Url.Action("Edit", "SubjectSelection")", { sId: vm.selected, subjects: vm.checkedSubjects }).done(function (json) {
+                                if (json.Status) {
+                                    $('#dataTable').DataTable().ajax.reload();
+                                    vm.Clear();
+                                    alert('儲存成功!');
+                                } else {
+                                    alert(`${json.Message}`);
+                                }
+                            });
+                        }
+                    }
+                },
+                // 清除輸入框
+                Clear: function () {
+                    vm.selected = "";
+                    vm.checkedSubjects = [];
+                    vm.add = true;
+                },
+            }
+        });
+
+        // 畫面載入執行function
+        $(function () {
+            GetStudents();
+            GetSubjects();
+            GetSelection();
+        });
+
+        // 取得所有學生姓名
+        function GetStudents() {
+            $.get('@Url.Action("GetStudentList","Students")').done(function (json) {
+                if (json.Status) {
+                    vm.Model.Students = json.Data
+                }
+            });
+        }
+
+        // 取得所有課程名稱
+        function GetSubjects() {
+            $.get('@Url.Action("GetSubjectList", "Subject")').done(function (json) {
+                if (json.Status) {
+                    vm.Model.Subjects = json.Data
+                }
+            });
+        }
+
+        // 取得選課資料
+        function GetSelection() {
+            let table = $('#dataTable').DataTable({
+                ajax: {
+                    "type": "GET",
+                    "url": "@Url.Action("GetSelectionList", "SubjectSelection")",
+                    "dataSrc": function (json) {
+                        return json.Data;
+                    }
+                },
+                columns: [
+                    { "data": "StudentId" },
+                    { "data": "SubjectNames" },
+                    {
+                        data: "Id",
+                        orderable: false, // 禁用排序
+                        render: function (data, type, row, meta) {
+                            // data==row.Id
+                            return "<input type='button' onclick='Updata(" + data + ")' value='編輯' class='btn btn-primary'/>"
+                                + "<input type='button' onclick='Delete(" + data + ")' value='刪除' class='btn btn-danger'/>";
+                        }
+                    }
+                ],
+                deferRender: true
+            });
+        }
+
+        // 編輯:使用學生id取得選課資料
+        function Updata(id) {
+            vm.selected = id;
+            vm.add = false;
+            vm.GetStudentSubjects();
+        };
+
+        // 刪除學生選課資料
+        function Delete(id) {
+            if (confirm('是否刪除該學生所有選課?') && id !=null && id !='') {
+                $.post('@Url.Action("Delete", "SubjectSelection")', { sId: id }).done(function (json) {
+                    if (json.Status) {
+                        // 刷新DataTable
+                        $('#dataTable').DataTable().ajax.reload();
+                        vm.Clear();
+                    } else {
+                        alert(`${json.Message}`);
+                    }
+                });
+            }
+        };
+
+
+    </script>
+
+</body>
+</html>
+
+
+
